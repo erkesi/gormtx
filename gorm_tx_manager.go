@@ -27,10 +27,6 @@ const (
 	backup = "backup"
 )
 
-var (
-	notOpenTx = errors.New("not open database transaction")
-)
-
 type dbtx struct {
 	db, tx *gorm.DB
 }
@@ -98,7 +94,7 @@ func (s *GormTxManager) MainDB(ctx context.Context) *gorm.DB {
 func (s *GormTxManager) MustMainTx(ctx context.Context) *gorm.DB {
 	db, ok := s.tx(ctx, s.mainDB)
 	if !ok {
-		panic(notOpenTx)
+		panic(errors.New("not open database transaction"))
 	}
 	return db
 }
@@ -179,7 +175,7 @@ func (s *GormTxManager) increaseTid() uint64 {
 func (s *GormTxManager) closeTx(ctx context.Context, db *gorm.DB, tid uint64, err error) error {
 	dt, ok := s.tid2Tx.Load(tid)
 	if !ok {
-		return errors.New(fmt.Sprintf("db(%s) tx closed", s.db2Name[db]))
+		return fmt.Errorf("db(%s) tx closed", s.db2Name[db])
 	}
 	s.tid2Tx.Delete(tid)
 	tx := dt.(*dbtx).tx
