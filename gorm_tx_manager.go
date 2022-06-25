@@ -4,10 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"gorm.io/gorm"
 	"math"
 	"sync"
 	"sync/atomic"
+
+	"gorm.io/gorm"
+	"gorm.io/plugin/dbresolver"
 )
 
 type NameDB struct {
@@ -42,6 +44,12 @@ type GormTxManager struct {
 	db2Name          map[*gorm.DB]string
 	tid2Tx           sync.Map
 	m                sync.Mutex
+}
+
+// NewGormTxManagerWithClauses 使用 DBResolver 读写分离
+func NewGormTxManagerWithClauses(db *gorm.DB) *GormTxManager {
+	mainDB, backupDB := db.Clauses(dbresolver.Write), db.Clauses(dbresolver.Read)
+	return NewGormTxManager(mainDB, backupDB)
 }
 
 func NewGormTxManager(mainDB, backupDB *gorm.DB) *GormTxManager {
