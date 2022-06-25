@@ -5,5 +5,5 @@ go 1.13
 require (
 	gorm.io/driver/sqlite v1.3.4
 	gorm.io/gorm v1.23.6
-	gorm.io/plugin/dbresolver v1.2.1 // indirect
+	gorm.io/plugin/dbresolver v1.2.1
 )
