@@ -18,7 +18,7 @@ func StartupNewDBTx() DBTxOpt {
 	}
 }
 
-type TxManager interface {
+type DBTxManager interface {
 	// OpenMainTx 开启 main库 事物
 	OpenMainTx(ctx context.Context, opts ...DBTxOpt) (context.Context, uint64)
 	// CloseMainTx 关闭 main库 事务
