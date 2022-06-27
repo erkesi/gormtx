@@ -48,7 +48,7 @@ func TestGormTxManager_Tx(t *testing.T) {
 	// err = errors.New("db tx rollback")
 }
 
-func testTx(ctx context.Context, txManager TxManager) error {
+func testTx(ctx context.Context, txManager DBTxManager) error {
 	// Create
 	err := txManager.MainDB(ctx).Create(&Product{Code: "D43", Price: 100}).Error
 	if err != nil {
