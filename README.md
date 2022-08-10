@@ -2,7 +2,7 @@
 
 > gorm 事务管理
 
-## 接口：[tx_manager.go](tx_manager.go)
+## 接口：[db_tx_manager.go](db_tx_manager.go)
 
 ## 实现：[gorm_tx_manager.go](gorm_tx_manager.go)
 
