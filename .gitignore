@@ -13,3 +13,11 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+main.db
+.idea/.gitignore
+.idea/dataSources.xml
+.idea/gormtx.iml
+.idea/modules.xml
+.idea/thriftCompiler.xml
+.idea/vcs.xml
+backup.db

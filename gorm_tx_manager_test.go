@@ -2,9 +2,10 @@ package gormtx
 
 import (
 	"context"
+	"testing"
+
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
-	"testing"
 )
 
 type Product struct {
@@ -49,12 +50,13 @@ func TestGormTxManager_Tx(t *testing.T) {
 }
 
 func testTx(ctx context.Context, txManager DBTxManager) error {
+	dbtx := txManager.MustMainTx(ctx)
 	// Create
-	err := txManager.MainDB(ctx).Create(&Product{Code: "D43", Price: 100}).Error
+	err := dbtx.WithContext(ctx).Create(&Product{Code: "D43", Price: 100}).Error
 	if err != nil {
 		return err
 	}
 	// Create
-	err = txManager.MainDB(ctx).Create(&User{Name: "D42"}).Error
+	err = dbtx.WithContext(ctx).Create(&User{Name: "D42"}).Error
 	return err
 }
