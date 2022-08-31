@@ -173,6 +173,9 @@ func (s *GormTxManager) increaseTid() uint64 {
 }
 
 func (s *GormTxManager) closeTx(ctx context.Context, db *gorm.DB, tid uint64, err error) error {
+	if tid == 0 { // 表示没有开启新的事务
+		return err
+	}
 	dt, ok := s.tid2Tx.Load(tid)
 	if !ok {
 		return fmt.Errorf("db(%s) tx closed", s.db2Name[db])
