@@ -2,13 +2,12 @@
 // Source: db_tx_manager.go
 
 // Package mock_gormtx is a generated GoMock package.
-package mock_gormtx
+package gormtx
 
 import (
 	context "context"
 	reflect "reflect"
 
-	gormtx "github.com/erkesi/gormtx"
 	gomock "github.com/golang/mock/gomock"
 	gorm "gorm.io/gorm"
 )
@@ -105,7 +104,7 @@ func (mr *MockDBTxManagerMockRecorder) MustMainTx(ctx interface{}) *gomock.Call 
 }
 
 // OpenMainTx mocks base method.
-func (m *MockDBTxManager) OpenMainTx(ctx context.Context, opts ...gormtx.DBTxOpt) (context.Context, uint64) {
+func (m *MockDBTxManager) OpenMainTx(ctx context.Context, opts ...DBTxOpt) (context.Context, uint64) {
 	m.ctrl.T.Helper()
 	varargs := []interface{}{ctx}
 	for _, a := range opts {
