@@ -5,22 +5,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type DBTxOpt func(opt *Option)
+type Option func(opt *options)
 
-type Option struct {
+type options struct {
 	StartupNewTx bool
 }
 
 // StartupNewDBTx 开启一个新的事务
-func StartupNewDBTx() DBTxOpt {
-	return func(opt *Option) {
+func StartupNewDBTx() Option {
+	return func(opt *options) {
 		opt.StartupNewTx = true
 	}
 }
 
 type DBTxManager interface {
 	// OpenMainTx 开启 main库 事物
-	OpenMainTx(ctx context.Context, opts ...DBTxOpt) (context.Context, uint64)
+	OpenMainTx(ctx context.Context, opts ...Option) (context.Context, uint64)
 	// CloseMainTx 关闭 main库 事务
 	CloseMainTx(ctx context.Context, txid uint64, err *error)
 	// MainDB 获取 main db，如果已经开启 main db tx，则返回 main db tx

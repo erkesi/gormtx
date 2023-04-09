@@ -59,7 +59,7 @@ func NewGormTxManager(mainDB, backupDB *gorm.DB) *GormTxManager {
 
 // OpenMainTx 开启 main库 事务
 // return 新的context 与 事务ID
-func (s *GormTxManager) OpenMainTx(ctx context.Context, opts ...DBTxOpt) (context.Context, uint64) {
+func (s *GormTxManager) OpenMainTx(ctx context.Context, opts ...Option) (context.Context, uint64) {
 	return s.addTx(ctx, s.mainDB, opts...)
 }
 
@@ -131,8 +131,8 @@ func (s *GormTxManager) tx(ctx context.Context, db *gorm.DB) (*gorm.DB, bool) {
 	return db, false
 }
 
-func (s *GormTxManager) addTx(ctx context.Context, db *gorm.DB, opts ...DBTxOpt) (context.Context, uint64) {
-	option := &Option{}
+func (s *GormTxManager) addTx(ctx context.Context, db *gorm.DB, opts ...Option) (context.Context, uint64) {
+	option := &options{}
 	for _, opt := range opts {
 		opt(option)
 	}

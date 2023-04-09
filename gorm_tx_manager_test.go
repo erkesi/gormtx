@@ -2,10 +2,10 @@ package gormtx
 
 import (
 	"context"
-	"testing"
-
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
+	"os"
+	"testing"
 )
 
 type Product struct {
@@ -19,38 +19,87 @@ type User struct {
 	Name string
 }
 
-func TestGormTxManager_Tx(t *testing.T) {
-	mainDB, err := gorm.Open(sqlite.Open("main.db"), &gorm.Config{})
-	if err != nil {
-		panic("failed to connect database")
-	}
-	backupDB, err := gorm.Open(sqlite.Open("backup.db"), &gorm.Config{})
-	if err != nil {
-		panic("failed to connect database")
-	}
-	// 迁移 schema
-	mainDB.AutoMigrate(&Product{})
-	mainDB.AutoMigrate(&User{})
-	backupDB.AutoMigrate(&Product{})
-	backupDB.AutoMigrate(&User{})
+var txManager DBTxManager
+var mainDB, backupDB *gorm.DB
 
+func TestGormTxManager_rollback(t *testing.T) {
+	var err error
 	ctx := context.TODO()
-	txManager := NewGormTxManager(mainDB, backupDB)
+	initDataFail(ctx, txManager)
+
+	if txManager.MainDB(ctx) != mainDB {
+		t.Fatal(txManager.MainDB(ctx))
+		return
+	}
+
+	if txManager.BackupDB() != backupDB {
+		t.Fatal(txManager.BackupDB())
+		return
+	}
+
+	if txManager.AutoDB(ctx) != backupDB {
+		t.Fatal(txManager.AutoDB(ctx))
+		return
+	}
+
+	var count int64
+	err = txManager.MainDB(ctx).Model(&User{}).Count(&count).Error
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	if count != 0 {
+		t.Fatal(count)
+		return
+	}
+
+	err = txManager.MainDB(ctx).Model(&Product{}).Count(&count).Error
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+	if count != 0 {
+		t.Fatal(count)
+		return
+	}
+}
+
+func TestGormTxManager_Tx(t *testing.T) {
+	var err error
+	ctx := context.TODO()
+
 	// open && close DB
 	ctx, txid := txManager.OpenMainTx(ctx)
 	defer txManager.CloseMainTx(ctx, txid, &err)
-	// test TX
-	err = testTx(ctx, txManager)
+
+	err = initData(ctx, txManager)
+	if err != nil {
+		t.Fatal(err)
+		return
+	}
+
 	// read DB
 	var product Product
 	txManager.MainDB(ctx).First(&product, "code = ?", "D43") // 查找 code 字段值为 D42 的记录
-	t.Log(product)
-	// err
-	// err = errors.New("db tx rollback")
+	if product.Price != 100 {
+		t.Fatal(product.Price)
+		return
+	}
+	var user User
+	txManager.MainDB(ctx).First(&user, "name = ?", "D42") // 查找 code 字段值为 D42 的记录
+	if user.Name != "D42" {
+		t.Fatal(user.Name)
+		return
+	}
 }
 
-func testTx(ctx context.Context, txManager DBTxManager) error {
+func initData(ctx context.Context, txManager DBTxManager) error {
 	dbtx := txManager.MustMainTx(ctx)
+
+	if txManager.AutoDB(ctx) != dbtx {
+		panic(txManager.AutoDB(ctx))
+	}
+
 	// Create
 	err := dbtx.WithContext(ctx).Create(&Product{Code: "D43", Price: 100}).Error
 	if err != nil {
@@ -59,4 +108,64 @@ func testTx(ctx context.Context, txManager DBTxManager) error {
 	// Create
 	err = dbtx.WithContext(ctx).Create(&User{Name: "D42"}).Error
 	return err
+}
+
+func initDataFail(ctx context.Context, txManager DBTxManager) {
+	var err error
+	defer func() {
+		if err == nil || err.Error() != "UNIQUE constraint failed: users.id" {
+			panic(err)
+		}
+	}()
+	// open && close DB
+	ctx, txid := txManager.OpenMainTx(ctx)
+	defer txManager.CloseMainTx(ctx, txid, &err)
+
+	dbtx := txManager.MustMainTx(ctx)
+
+	err = dbtx.WithContext(ctx).Create(&Product{Code: "D43", Price: 100}).Error
+	if err != nil {
+		return
+	}
+
+	err = dbtx.WithContext(ctx).Create(&User{Model: gorm.Model{
+		ID: 1,
+	}, Name: "D42"}).Error
+	if err != nil {
+		return
+	}
+
+	err = dbtx.WithContext(ctx).Create(&User{Model: gorm.Model{
+		ID: 1,
+	}, Name: "D42"}).Error
+
+}
+
+func setup() {
+	_ = os.Remove("testdata/main.db")
+	_ = os.Remove("testdata/backup.db")
+	var err error
+	mainDB, err = gorm.Open(sqlite.Open("testdata/main.db"), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	backupDB, err = gorm.Open(sqlite.Open("testdata/backup.db"), &gorm.Config{})
+	if err != nil {
+		panic(err)
+	}
+	// 迁移 schema
+	err = mainDB.AutoMigrate(&Product{}, &User{})
+	if err != nil {
+		panic(err)
+	}
+	err = backupDB.AutoMigrate(&Product{}, &User{})
+	if err != nil {
+		panic(err)
+	}
+	txManager = NewGormTxManager(mainDB, backupDB)
+}
+
+func TestMain(m *testing.M) {
+	setup()
+	_ = m.Run()
 }
