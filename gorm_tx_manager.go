@@ -70,17 +70,17 @@ func (s *GormTxManager) OpenMainTx(ctx context.Context, opts ...Option) (context
 // err: 判断是提交事务还是回滚事务
 func (s *GormTxManager) CloseMainTx(ctx context.Context, txid uint64, err *error) {
 	isRecover := false
-	errTmp := *err
-	if errTmp == nil {
+	tmpErr := *err
+	if tmpErr == nil {
 		r := recover()
 		if r != nil {
 			isRecover = true
-			errTmp = fmt.Errorf("%v", r)
+			tmpErr = fmt.Errorf("%v", r)
 		}
 	}
-	*err = s.closeTx(ctx, s.mainDB, txid, errTmp)
+	*err = s.closeTx(ctx, s.mainDB, txid, tmpErr)
 	if isRecover {
-		panic(errTmp)
+		panic(tmpErr)
 	}
 }
 
@@ -176,22 +176,23 @@ func (s *GormTxManager) closeTx(ctx context.Context, db *gorm.DB, tid uint64, er
 	if tid == 0 { // 表示没有开启新的事务
 		return err
 	}
+	dbName := s.db2Name[db]
 	dt, ok := s.tid2Tx.Load(tid)
 	if !ok {
-		return fmt.Errorf("db(%s) tx closed", s.db2Name[db])
+		return fmt.Errorf("%s database transaction closed",dbName)
 	}
 	s.tid2Tx.Delete(tid)
 	tx := dt.(*dbtx).tx
 	if err != nil {
-		err2 := tx.Rollback().Error
-		if err2 != nil {
-			return fmt.Errorf("tx rollback error:%s, warp:%w", err2.Error(), err)
+		dbErr := tx.Rollback().Error
+		if dbErr != nil {
+			return fmt.Errorf("%s database transaction rollback error:%v, warp:%w", dbName, dbErr, err)
 		}
 		return err
 	}
-	err2 := tx.Commit().Error
-	if err2 != nil {
-		return fmt.Errorf("tx commit error:%w", err2)
+	dbErr := tx.Commit().Error
+	if dbErr != nil {
+		return fmt.Errorf("%s database transaction commit error:%w", dbName, dbErr)
 	}
 	return err
 }
