@@ -2,7 +2,7 @@
 
 > gorm 事务管理
 
-## 接口：[db_tx_manager.go](db_tx_manager.go)
+## 接口：[db_tx_manager.go](db_tx_manager.go) ，Mock [db_tx_manager_mock](db_tx_manager_mock.go)
 ```go
 type DBTxManager interface {
 	// OpenMainTx 开启 main库 事物
