@@ -20,12 +20,12 @@ type NameDB struct {
 type ctxTxId struct {
 }
 
-type ctxDBReadOnly struct {
+type ctxNonTx struct {
 }
 
 var txidCtxKey = &ctxTxId{}
 
-var dbReadOnlyCtxKey = &ctxDBReadOnly{}
+var dbNonTxCtxKey = &ctxNonTx{}
 
 const (
 	main   = "main"
@@ -62,9 +62,9 @@ func NewGormTxManager(mainDB, backupDB *gorm.DB) *GormTxManager {
 	}
 }
 
-// ReadOnly 不使用事务来查询
-func (s *GormTxManager) ReadOnly(ctx context.Context) context.Context {
-	return context.WithValue(ctx, dbReadOnlyCtxKey, struct{}{})
+// NonTx 非事务上下文
+func (s *GormTxManager) NonTx(ctx context.Context) context.Context {
+	return context.WithValue(ctx, dbNonTxCtxKey, struct{}{})
 }
 
 // OpenMainTx 开启 main库 事务
@@ -123,8 +123,8 @@ func (s *GormTxManager) BackupDB() *gorm.DB {
 }
 
 func (s *GormTxManager) tx(ctx context.Context, db *gorm.DB) (*gorm.DB, bool) {
-	readonly := ctx.Value(dbReadOnlyCtxKey)
-	if readonly != nil {
+	nonTx := ctx.Value(dbNonTxCtxKey)
+	if nonTx != nil {
 		return db, false
 	}
 	curTids := ctx.Value(txidCtxKey)
@@ -193,7 +193,7 @@ func (s *GormTxManager) closeTx(ctx context.Context, db *gorm.DB, tid uint64, er
 	dbName := s.db2Name[db]
 	dt, ok := s.tid2Tx.Load(tid)
 	if !ok {
-		return fmt.Errorf("%s database transaction closed",dbName)
+		return fmt.Errorf("%s database transaction closed", dbName)
 	}
 	s.tid2Tx.Delete(tid)
 	tx := dt.(*dbtx).tx

@@ -5,6 +5,8 @@
 ## 接口：[db_tx_manager](db_tx_manager.go) ，Mock [db_tx_manager_mock](db_tx_manager_mock.go)
 ```go
 type DBTxManager interface {
+    // NonTx 非事务上下文
+    NonTx(ctx context.Context) context.Context
 	// OpenMainTx 开启 main库 事物
 	OpenMainTx(ctx context.Context, opts ...Option) (context.Context, uint64)
 	// CloseMainTx 关闭 main库 事务
