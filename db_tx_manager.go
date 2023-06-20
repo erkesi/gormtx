@@ -19,6 +19,8 @@ func StartupNewDBTx() Option {
 }
 
 type DBTxManager interface {
+	// ReadOnly 不使用事务来查询
+	ReadOnly(ctx context.Context) context.Context
 	// OpenMainTx 开启 main库 事物
 	OpenMainTx(ctx context.Context, opts ...Option) (context.Context, uint64)
 	// CloseMainTx 关闭 main库 事务

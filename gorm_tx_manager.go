@@ -20,7 +20,12 @@ type NameDB struct {
 type ctxTxId struct {
 }
 
-var ctxTxidMask = &ctxTxId{}
+type ctxDBReadOnly struct {
+}
+
+var txidCtxKey = &ctxTxId{}
+
+var dbReadOnlyCtxKey = &ctxDBReadOnly{}
 
 const (
 	main   = "main"
@@ -55,6 +60,11 @@ func NewGormTxManager(mainDB, backupDB *gorm.DB) *GormTxManager {
 		backupDB: backupDB,
 		db2Name:  db2Name,
 	}
+}
+
+// ReadOnly 不使用事务来查询
+func (s *GormTxManager) ReadOnly(ctx context.Context) context.Context {
+	return context.WithValue(ctx, dbReadOnlyCtxKey, struct{}{})
 }
 
 // OpenMainTx 开启 main库 事务
@@ -113,7 +123,11 @@ func (s *GormTxManager) BackupDB() *gorm.DB {
 }
 
 func (s *GormTxManager) tx(ctx context.Context, db *gorm.DB) (*gorm.DB, bool) {
-	curTids := ctx.Value(ctxTxidMask)
+	readonly := ctx.Value(dbReadOnlyCtxKey)
+	if readonly != nil {
+		return db, false
+	}
+	curTids := ctx.Value(txidCtxKey)
 	if curTids == nil {
 		return db, false
 	}
@@ -153,7 +167,7 @@ func (s *GormTxManager) addTx(ctx context.Context, db *gorm.DB, opts ...Option) 
 	newTids := make([]uint64, 0, 16)
 	newTids = append(newTids, tid)
 	newTids = append(newTids, txids...)
-	ctx = context.WithValue(ctx, ctxTxidMask, newTids)
+	ctx = context.WithValue(ctx, txidCtxKey, newTids)
 	s.tid2Tx.Store(tid, &dbtx{
 		db: db,
 		tx: db.Begin(),
@@ -197,7 +211,7 @@ func (s *GormTxManager) closeTx(ctx context.Context, db *gorm.DB, tid uint64, er
 }
 
 func (s *GormTxManager) txids(ctx context.Context) []uint64 {
-	curTxids := ctx.Value(ctxTxidMask)
+	curTxids := ctx.Value(txidCtxKey)
 	txids := make([]uint64, 0, 16)
 	if curTxids != nil {
 		txids = curTxids.([]uint64)
