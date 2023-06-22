@@ -21,10 +21,10 @@ func StartupNewDBTx() Option {
 type DBTxManager interface {
 	// NonTx 非事务上下文
 	NonTx(ctx context.Context) context.Context
-	// OpenMainTx 开启 main库 事物
-	OpenMainTx(ctx context.Context, opts ...Option) (context.Context, uint64)
-	// CloseMainTx 关闭 main库 事务
-	CloseMainTx(ctx context.Context, txid uint64, err *error)
+	// OpenTx 开启事务
+	OpenTx(ctx context.Context, opts ...Option) (context.Context, uint64)
+	// CloseTx 关闭事务
+	CloseTx(ctx context.Context, txid uint64, err *error)
 	// MainDB 获取 main db，如果已经开启 main db tx，则返回 main db tx
 	MainDB(ctx context.Context) *gorm.DB
 	// BackupDB 获取 Backup db

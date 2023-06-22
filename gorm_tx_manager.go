@@ -67,18 +67,18 @@ func (s *GormTxManager) NonTx(ctx context.Context) context.Context {
 	return context.WithValue(ctx, dbNonTxCtxKey, struct{}{})
 }
 
-// OpenMainTx 开启 main库 事务
+// OpenTx 开启 main库 事务
 // return 新的context 与 事务ID
-func (s *GormTxManager) OpenMainTx(ctx context.Context, opts ...Option) (context.Context, uint64) {
+func (s *GormTxManager) OpenTx(ctx context.Context, opts ...Option) (context.Context, uint64) {
 	return s.addTx(ctx, s.mainDB, opts...)
 }
 
-// CloseMainTx 关闭 main库 事务
+// CloseTx 关闭 main库 事务
 // 参数：
 // ctx:	开启 main库 事务返回的新的context
 // txid: 开启 main库 事务返回的事务ID
 // err: 判断是提交事务还是回滚事务
-func (s *GormTxManager) CloseMainTx(ctx context.Context, txid uint64, err *error) {
+func (s *GormTxManager) CloseTx(ctx context.Context, txid uint64, err *error) {
 	isRecover := false
 	tmpErr := *err
 	if tmpErr == nil {

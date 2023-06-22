@@ -69,8 +69,8 @@ func TestGormTxManager_Tx(t *testing.T) {
 	ctx := context.TODO()
 
 	// open && close DB
-	ctx, txid := txManager.OpenMainTx(ctx)
-	defer txManager.CloseMainTx(ctx, txid, &err)
+	ctx, txid := txManager.OpenTx(ctx)
+	defer txManager.CloseTx(ctx, txid, &err)
 
 	err = initData(ctx, txManager)
 	if err != nil {
@@ -118,8 +118,8 @@ func initDataFail(ctx context.Context, txManager DBTxManager) {
 		}
 	}()
 	// open && close DB
-	ctx, txid := txManager.OpenMainTx(ctx)
-	defer txManager.CloseMainTx(ctx, txid, &err)
+	ctx, txid := txManager.OpenTx(ctx)
+	defer txManager.CloseTx(ctx, txid, &err)
 
 	dbtx := txManager.MustMainTx(ctx)
 
