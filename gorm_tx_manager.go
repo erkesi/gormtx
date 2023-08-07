@@ -97,7 +97,7 @@ func (s *GormTxManager) CloseTx(ctx context.Context, txid uint64, err *error) {
 // MainDB 获取 main db，如果已经开启 main db tx，则返回 main db tx
 func (s *GormTxManager) MainDB(ctx context.Context) *gorm.DB {
 	db, _ := s.tx(ctx, s.mainDB)
-	return db
+	return db.WithContext(ctx)
 }
 
 // MustMainTx 获取 main db tx，如果已经开启 main db tx，则返回 main db tx，否则 panic
@@ -106,20 +106,20 @@ func (s *GormTxManager) MustMainTx(ctx context.Context) *gorm.DB {
 	if !ok {
 		panic(errors.New("not open database transaction"))
 	}
-	return db
+	return db.WithContext(ctx)
 }
 
 // AutoDB 获取 db，如果已经开启 main db tx，则返回 db tx，否则 返回 backup db
 func (s *GormTxManager) AutoDB(ctx context.Context) *gorm.DB {
 	if db, ok := s.tx(ctx, s.mainDB); ok {
-		return db
+		return db.WithContext(ctx)
 	}
-	return s.BackupDB()
+	return s.BackupDB(ctx)
 }
 
 // BackupDB 获取 Backup db
-func (s *GormTxManager) BackupDB() *gorm.DB {
-	return s.backupDB
+func (s *GormTxManager) BackupDB(ctx context.Context) *gorm.DB {
+	return s.backupDB.WithContext(ctx)
 }
 
 func (s *GormTxManager) tx(ctx context.Context, db *gorm.DB) (*gorm.DB, bool) {

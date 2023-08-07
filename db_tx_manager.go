@@ -28,7 +28,7 @@ type DBTxManager interface {
 	// MainDB 获取 main db，如果已经开启 main db tx，则返回 main db tx
 	MainDB(ctx context.Context) *gorm.DB
 	// BackupDB 获取 Backup db
-	BackupDB() *gorm.DB
+	BackupDB(ctx context.Context) *gorm.DB
 	// AutoDB 获取 db，如果已经开启 main db tx，则返回 db tx，否则 返回 backup db
 	AutoDB(ctx context.Context) *gorm.DB
 	// MustMainTx 获取 main db tx，如果已经开启 main db tx，则返回 main db tx，否则 panic

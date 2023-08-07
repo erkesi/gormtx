@@ -27,21 +27,6 @@ func TestGormTxManager_rollback(t *testing.T) {
 	ctx := context.TODO()
 	initDataFail(ctx, txManager)
 
-	if txManager.MainDB(ctx) != mainDB {
-		t.Fatal(txManager.MainDB(ctx))
-		return
-	}
-
-	if txManager.BackupDB() != backupDB {
-		t.Fatal(txManager.BackupDB())
-		return
-	}
-
-	if txManager.AutoDB(ctx) != backupDB {
-		t.Fatal(txManager.AutoDB(ctx))
-		return
-	}
-
 	var count int64
 	err = txManager.MainDB(ctx).Model(&User{}).Count(&count).Error
 	if err != nil {
